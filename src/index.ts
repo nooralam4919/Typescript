@@ -1,7 +1,16 @@
-function sum(a:number, b: number): number{
-    console.log(`sum is ${a+b}`);
-    return a + b;
-}
+import dotenv from 'dotenv'
+import { app } from './app.js'
 
-sum(1, 22);
+dotenv.config({
+    path: './.env'
+});
 
+const PORT = process.env.PORT
+
+app.get('/', (req, res) => {
+    res.json({message: "Hello from backendif hou"})
+})
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+})  

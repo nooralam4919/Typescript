@@ -1,7 +1,13 @@
-function sum(a, b) {
-    console.log(`sum is ${a + b}`);
-    return a + b;
-}
-sum(1, 22);
-export {};
+import dotenv from "dotenv";
+import express from "express";
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 4000;
+app.get("/", (req, res) => {
+    console.log("Hello");
+    res.send("Hello World");
+});
+app.listen(PORT, () => {
+    console.log(`Application is listening on port ${PORT}`);
+});
 //# sourceMappingURL=index.js.map
