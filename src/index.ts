@@ -8,7 +8,7 @@ dotenv.config({
 const PORT = process.env.PORT
 
 app.get('/', (req, res) => {
-    res.json({message: "Hello from backendif hou"})
+    res.json({message: "this is the backend"});
 })
 
 app.listen(PORT, () => {
