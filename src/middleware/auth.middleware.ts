@@ -12,7 +12,8 @@ const verifyJWT = asyncHandler(
     ) => {
         const token = req.cookies?.accessToken;
 
-        console.log("ACCESS TOKEN:", token);
+        // console.log("ACCESS TOKEN:", token);
+        
 
         if (!token) {
             throw new ApiError(

@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -11,12 +6,6 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
-
-
-// ===============================
-// ENUMS
-// ===============================
 
 enum AuthProvider {
   LOCAL
@@ -67,122 +56,86 @@ enum JobStatus {
   FAILED
 }
 
-
-// ===============================
-// USER
-// ===============================
-
 model User {
-  id             String         @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
-  email          String         @unique
+  email          String       @unique
   password       String?
-
   avatarUrl      String?
-
-  provider       AuthProvider   @default(LOCAL)
-  githubId       String?        @unique
+  provider       AuthProvider @default(LOCAL)
+  githubId       String?      @unique
   githubUsername String?
-
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  projects       Project[]
-  scans          Scan[]
-
-  githubAccount  GithubAccount?
   accessToken    String?
-  refreshTokens  RefreshToken[]
-}
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-// ===============================
-// GITHUB ACCOUNT
-// ===============================
+  projects      Project[]
+  scans         Scan[]
+  githubAccount GithubAccount?
+  refreshTokens RefreshToken[]
+}
 
 model GithubAccount {
   id          String   @id @default(uuid())
   userId      String   @unique
-
   githubId    String   @unique
   username    String
   accessToken String?
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-
-// ===============================
-// PROJECT / REPOSITORY
-// ===============================
 
 model Project {
   id             String            @id @default(uuid())
-
   name           String
   description    String?
-
   repositoryUrl  String
   repositoryName String?
   githubRepoId   String?
-
   visibility     ProjectVisibility @default(PRIVATE)
   status         ProjectStatus     @default(ACTIVE)
-
   ownerId        String
-
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
-  owner          User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
-  scans          Scan[]
+  owner      User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  scans      Scan[]
+  scanFiles  ScanFile[]
+  codeChunks CodeChunk[]
 
   @@index([ownerId])
   @@index([githubRepoId])
 }
 
-
-// ===============================
-// SCAN
-// ===============================
-
 model Scan {
   id            String     @id @default(uuid())
-
   projectId     String
   userId        String
-
   type          ScanType   @default(MANUAL)
   status        ScanStatus @default(QUEUED)
-
   branch        String?
   commitHash    String?
-
   startedAt     DateTime?
   completedAt   DateTime?
-
   totalFiles    Int        @default(0)
   scannedFiles  Int        @default(0)
-
   totalFindings Int        @default(0)
   criticalCount Int        @default(0)
   highCount     Int        @default(0)
   mediumCount   Int        @default(0)
   lowCount      Int        @default(0)
-
   errorMessage  String?
-
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  findings      Finding[]
-  jobs          ScanJob[]
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  findings   Finding[]
+  jobs       ScanJob[]
+  scanFiles  ScanFile[]
+  codeChunks CodeChunk[]
 
   @@index([projectId])
   @@index([userId])
@@ -190,35 +143,71 @@ model Scan {
   @@index([createdAt])
 }
 
-// ===============================
-// SECURITY FINDING
-// ===============================
+model ScanFile {
+  id        String   @id @default(uuid())
+  scanId    String
+  projectId String
+  filePath  String
+  language  String?
+  fileSize  Int?
+  createdAt DateTime @default(now())
+
+  scan    Scan        @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  chunks  CodeChunk[]
+
+  @@unique([scanId, filePath])
+  @@index([scanId])
+  @@index([projectId])
+  @@index([filePath])
+}
+
+model CodeChunk {
+  id         String @id @default(uuid())
+  scanId     String
+  projectId  String
+  scanFileId String
+
+  chunkIndex Int
+  content    String
+
+  startLine Int?
+  endLine   Int?
+  language  String?
+  metadata  Json?
+
+  embedding Unsupported("vector(3072)")?
+
+  createdAt DateTime @default(now())
+
+  scan     Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scanFile ScanFile @relation(fields: [scanFileId], references: [id], onDelete: Cascade)
+
+  @@unique([scanFileId, chunkIndex])
+  @@index([scanId])
+  @@index([projectId])
+  @@index([scanFileId])
+}
 
 model Finding {
   id             String          @id @default(uuid())
-
   scanId         String
-
   ruleId         String
   ruleName       String
-
   severity       FindingSeverity
   status         FindingStatus   @default(OPEN)
-
   title          String
   description    String?
-
   filePath       String
   lineNumber     Int?
   columnNumber   Int?
-
   codeSnippet    String?
   recommendation String?
-
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  scan           Scan            @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  scan Scan @relation(fields: [scanId], references: [id], onDelete: Cascade)
 
   @@index([scanId])
   @@index([severity])
@@ -226,49 +215,33 @@ model Finding {
   @@index([ruleId])
 }
 
-// ===============================
-// SCAN JOB
-// ===============================
-
 model ScanJob {
   id           String    @id @default(uuid())
-
   scanId       String
   jobId        String?   @unique
-
   status       JobStatus @default(WAITING)
   attempts     Int       @default(0)
-
   startedAt    DateTime?
   completedAt  DateTime?
-
   errorMessage String?
-
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  scan         Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  scan Scan @relation(fields: [scanId], references: [id], onDelete: Cascade)
 
   @@index([scanId])
   @@index([status])
 }
 
-// ===============================
-// REFRESH TOKEN
-// ===============================
-
 model RefreshToken {
-  id        String   @id @default(uuid())
-
+  id        String    @id @default(uuid())
   userId    String
-  tokenHash String   @unique
-
+  tokenHash String    @unique
   expiresAt DateTime
   revokedAt DateTime?
+  createdAt DateTime  @default(now())
 
-  createdAt DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])

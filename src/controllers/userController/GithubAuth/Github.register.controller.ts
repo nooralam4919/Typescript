@@ -264,6 +264,8 @@ const githubCallback = asyncHandler( async (req: Request, res: Response) => {
             );
 
 
+
+
         // =================================================
         // STEP 9
         // Save access token if your DB has this field
@@ -279,6 +281,26 @@ const githubCallback = asyncHandler( async (req: Request, res: Response) => {
                 accessToken: accessToken,
             },
         });
+
+
+        await prisma.githubAccount.upsert({
+        where: {
+            userId: user.id,
+        },
+
+        update: {
+            githubId: String(githubUser.id),
+            username: githubUser.login,
+            accessToken: githubAccessToken,
+        },
+
+        create: {
+            userId: user.id,
+            githubId: String(githubUser.id),
+            username: githubUser.login,
+            accessToken: githubAccessToken,
+        },
+    });
 
 
         // =================================================

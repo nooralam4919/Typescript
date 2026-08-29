@@ -22,6 +22,7 @@ const uploadOnCloudinay = async (localFilePath: string) => {
 
         console.log("File uploaded successfully");
         console.log("URL:", response.secure_url);
+        // fs.unlinkSync(localFilePath);
         return response;
 
     } catch (error) {
