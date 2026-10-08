@@ -42,6 +42,18 @@ app.use("/auth", githubRouter);
 import repoRouter from "./routes/repository.routes.js"
 app.use("/api/v1/github", repoRouter);
 
+import reviewRouter from './routes/review.routes.js'
+app.use("/api/user/agent", reviewRouter);
+
+import quaryRouter from "./routes/Quary/Quary.Router.js"
+app.use("/api/v1/agentreview", quaryRouter);
+
+import ragRouter from './routes/RAG_Router/rag.routes.js'
+app.use("/internal/rag", ragRouter);
+
+import multiAgentRouter from './routes/multiagent.routes.js'
+app.use("/api/v1/review", multiAgentRouter);
+
 
 // Global error handler
 

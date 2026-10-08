@@ -177,6 +177,15 @@ const findUser = asyncHandler(
             where: {
                 id: userId,
             },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+                provider: true,
+                githubUsername: true,
+                createdAt: true,
+            },
         });
 
         if (!userInfo) {
